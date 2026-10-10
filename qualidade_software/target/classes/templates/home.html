@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - Educational Quality Project</title>
+</head>
+<body>
+    <div id="content">
+        <div class="jumbotron">
+            <h1 class="display-4">Bem-vindo à Gestão Escolar</h1>
+            <p class="lead">Gerencie os cadastros de estudantes e professores em um só lugar.</p>
+            <hr class="my-4">
+            <p>Selecione uma área para consultar e gerenciar os registros.</p>
+            <a class="btn btn-primary btn-lg" href="/students" role="button">Gerenciar estudantes</a>
+            <a class="btn btn-secondary btn-lg" href="/teachers" role="button">Gerenciar professores</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${student.id != null ? 'Editar estudante' : 'Novo estudante'}">Estudante</title>
+</head>
+<body>
+    <div id="content">
+        <div class="mb-4">
+            <a href="/students" class="link-secondary text-decoration-none">← Voltar para estudantes</a>
+            <h1 class="h2 mt-3" th:text="${student.id != null ? 'Editar estudante' : 'Cadastrar estudante'}">Estudante</h1>
+            <p class="text-body-secondary mb-0">Preencha os dados abaixo para salvar o registro.</p>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form th:action="${student.id != null ? '/students/' + student.id : '/students'}"
+                      th:object="${student}"
+                      method="post">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nome completo</label>
+                        <input type="text" class="form-control" id="name" th:field="*{name}" autocomplete="name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="email" th:field="*{email}" autocomplete="email" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="registrationNumber" class="form-label">Matrícula</label>
+                        <input type="text" class="form-control" id="registrationNumber" th:field="*{registrationNumber}" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary"
+                            th:text="${student.id != null ? 'Salvar alterações' : 'Cadastrar estudante'}">Salvar</button>
+                    <a href="/students" class="btn btn-outline-secondary ms-2">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
