@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Professores - Gestão Escolar</title>
+</head>
+<body>
+    <div id="content">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+            <div>
+                <h1 class="h2 mb-1">Professores</h1>
+                <p class="text-body-secondary mb-0">Consulte e mantenha os dados dos professores cadastrados.</p>
+            </div>
+            <a href="/teachers/new" class="btn btn-primary">Cadastrar professor</a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div th:if="${databaseError != null}" class="alert alert-warning m-3" role="alert">
+                    <h2 class="h5 alert-heading">Banco de dados indisponível</h2>
+                    <p class="mb-0" th:text="${databaseError}">Não foi possível carregar os professores.</p>
+                </div>
+                <div th:if="${databaseError == null and #lists.isEmpty(teachers)}" class="text-center p-5">
+                    <h2 class="h5">Nenhum professor cadastrado</h2>
+                    <p class="text-body-secondary">Cadastre o primeiro professor para começar a gerenciar os registros.</p>
+                    <a href="/teachers/new" class="btn btn-primary">Cadastrar professor</a>
+                </div>
+                <div th:if="${databaseError == null and not #lists.isEmpty(teachers)}" class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Nome</th>
+                                <th scope="col">E-mail</th>
+                                <th scope="col">Departamento</th>
+                                <th scope="col" class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="teacher : ${teachers}">
+                                <td th:text="${teacher.name}"></td>
+                                <td th:text="${teacher.email}"></td>
+                                <td th:text="${teacher.department}"></td>
+                                <td class="text-end text-nowrap">
+                                    <a th:href="@{/teachers/{id}/edit(id=${teacher.id})}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                    <a th:href="@{/teachers/{id}/delete(id=${teacher.id})}"
+                                       class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('Deseja excluir este professor?')">Excluir</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
