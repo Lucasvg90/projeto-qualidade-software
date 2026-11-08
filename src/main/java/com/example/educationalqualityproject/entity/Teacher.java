@@ -3,6 +3,8 @@ package com.example.educationalqualityproject.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "teachers")
 public class Teacher {
@@ -13,6 +15,7 @@ public class Teacher {
     private String name;
     private String email;
     private String department;
+    private List<String> competencies = new ArrayList<>();
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -62,6 +65,15 @@ public class Teacher {
 
     public void setDepartment(String department) {
         this.department = department;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public List<String> getCompetencies() {
+        return competencies;
+    }
+
+    public void setCompetencies(List<String> competencies) {
+        this.competencies = competencies == null ? new ArrayList<>() : new ArrayList<>(competencies);
         this.updatedAt = LocalDateTime.now();
     }
 

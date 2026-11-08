@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/teachers")
@@ -22,8 +23,11 @@ public class TeacherApiController {
      * Get all teachers
      */
     @GetMapping
-    public ResponseEntity<List<Teacher>> getAllTeachers() {
-        List<Teacher> teachers = teacherService.getAllTeachers();
+    public ResponseEntity<List<Teacher>> getAllTeachers(
+            @RequestParam(required = false) String competence,
+            @RequestParam(required = false) Instant availableFrom,
+            @RequestParam(required = false) Instant availableUntil) {
+        List<Teacher> teachers = teacherService.search(competence, availableFrom, availableUntil);
         return new ResponseEntity<>(teachers, HttpStatus.OK);
     }
 

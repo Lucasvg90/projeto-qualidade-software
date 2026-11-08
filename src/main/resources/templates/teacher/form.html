@@ -1,34 +1,41 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
 <head>
     <meta charset="UTF-8">
     <title th:text="${teacher.id != null ? 'Edit Teacher' : 'New Teacher'}">Teacher Form</title>
 </head>
 <body>
     <div id="content">
-        <h2 th:text="${teacher.id != null ? 'Edit Teacher' : 'New Teacher'}">Teacher Form</h2>
+        <h1 class="mb-4" th:text="${teacher.id != null ? 'Editar professor' : 'Cadastrar professor'}">Cadastrar professor</h1>
         
         <form th:action="${teacher.id != null ? '/teachers/' + teacher.id : '/teachers'}" 
               th:object="${teacher}" 
               method="post">
             
             <div class="mb-3">
-                <label for="name" class="form-label">Name</label>
-                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                <label for="name" class="form-label">Nome completo</label>
+                <input type="text" class="form-control" id="name" th:field="*{name}" maxlength="120" required>
             </div>
             
             <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" th:field="*{email}" required>
+                <label for="email" class="form-label">E-mail</label>
+                <input type="email" class="form-control" id="email" th:field="*{email}" maxlength="160" required>
             </div>
             
             <div class="mb-3">
-                <label for="department" class="form-label">Department</label>
-                <input type="text" class="form-control" id="department" th:field="*{department}" required>
+                <label for="department" class="form-label">Departamento</label>
+                <input type="text" class="form-control" id="department" th:field="*{department}" maxlength="120" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="competencies" class="form-label">Competências</label>
+                <input type="text" class="form-control" id="competencies" name="competencies"
+                       th:value="${#strings.listJoin(teacher.competencies, ', ')}">
+                <div class="form-text">Informe as competências separadas por vírgula.</div>
             </div>
             
-            <button type="submit" class="btn btn-primary" th:text="${teacher.id != null ? 'Update' : 'Save'}">Save</button>
-            <a href="/teachers" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary" th:text="${teacher.id != null ? 'Salvar alterações' : 'Cadastrar professor'}">Cadastrar professor</button>
+            <a href="/teachers" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
 </body>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
+<body>
+<div id="content">
+    <h1>Reservas aguardando aprovação</h1>
+    <div class="table-responsive"><table class="table table-striped">
+        <thead><tr><th>Solicitante</th><th>Recursos</th><th>Professor</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead>
+        <tbody>
+        <tr th:each="reservation : ${reservations}">
+            <td th:text="${reservation.requestedBy}"></td>
+            <td th:text="${#strings.listJoin(reservation.resourceIds, ', ')}"></td>
+            <td th:text="${reservation.teacherId != null ? reservation.teacherId : '-'}"></td>
+            <td th:text="${reservation.startAt}"></td><td th:text="${reservation.endAt}"></td>
+            <td>
+                <form class="d-inline" method="post" th:action="@{/admin/reservations/{id}/approve(id=${reservation.id})}">
+                    <button class="btn btn-sm btn-success" type="submit">Aprovar</button>
+                </form>
+                <form class="d-inline" method="post" th:action="@{/admin/reservations/{id}/reject(id=${reservation.id})}">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Rejeitar</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(reservations)}"><td colspan="6">Não há reservas pendentes.</td></tr>
+        </tbody>
+    </table></div>
+</div>
+</body>
+</html>

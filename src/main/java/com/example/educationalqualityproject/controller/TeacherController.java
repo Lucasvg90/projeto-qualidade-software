@@ -2,25 +2,53 @@ package com.example.educationalqualityproject.controller;
 
 import com.example.educationalqualityproject.entity.Teacher;
 import com.example.educationalqualityproject.service.TeacherService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Controller
 @RequestMapping("/teachers")
 public class TeacherController {
 
-    @Autowired
-    private TeacherService teacherService;
+    private final TeacherService teacherService;
+
+    public TeacherController(TeacherService teacherService) {
+        this.teacherService = teacherService;
+    }
 
     @GetMapping
-    public String listTeachers(Model model) {
-        List<Teacher> teachers = teacherService.getAllTeachers();
+    public String listTeachers(
+            @RequestParam(required = false) String competence,
+            @RequestParam(required = false) String availableFrom,
+            @RequestParam(required = false) String availableUntil,
+            Model model) {
+        List<Teacher> teachers = teacherService.search(
+                competence, parseDateTime(availableFrom), parseDateTime(availableUntil));
         model.addAttribute("teachers", teachers);
+        model.addAttribute("competence", competence);
         return "teacher/list";
+    }
+
+    private Instant parseDateTime(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Instant.parse(value);
+        } catch (java.time.format.DateTimeParseException ignored) {
+            try {
+                return LocalDateTime.parse(value).atZone(ZoneId.systemDefault()).toInstant();
+            } catch (java.time.format.DateTimeParseException exception) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.BAD_REQUEST,
+                        "Informe uma data e hora válidas para a disponibilidade.", exception);
+            }
+        }
     }
 
     @GetMapping("/new")

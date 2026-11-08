@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
 <head>
     <meta charset="UTF-8">
     <title>Home - Educational Quality Project</title>
@@ -7,12 +7,12 @@
 <body>
     <div id="content">
         <div class="jumbotron">
-            <h1 class="display-4">Welcome to Educational Quality Project</h1>
-            <p class="lead">This is a simple application for managing students and teachers.</p>
+            <h1 class="display-4">Gestão de recursos educacionais</h1>
+            <p class="lead">Consulte salas, professores e materiais e organize reservas sem conflitos.</p>
             <hr class="my-4">
-            <p>Use the navigation menu to manage students and teachers.</p>
-            <a class="btn btn-primary btn-lg" href="/students" role="button">Manage Students</a>
-            <a class="btn btn-secondary btn-lg" href="/teachers" role="button">Manage Teachers</a>
+            <p>Pesquise recursos por tipo, capacidade, localização, competência e disponibilidade.</p>
+            <a class="btn btn-primary btn-lg" href="/resources" role="button">Consultar recursos</a>
+            <a class="btn btn-secondary btn-lg" href="/teachers" role="button">Professores</a>
         </div>
     </div>
 </body>

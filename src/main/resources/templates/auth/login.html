@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
+<body>
+<div id="content" class="row justify-content-center">
+    <div class="col-md-5">
+        <h1>Entrar</h1>
+        <div class="alert alert-success" th:if="${param.registered}">Conta criada. Entre para continuar.</div>
+        <div class="alert alert-danger" th:if="${param.error}">E-mail ou senha inválidos.</div>
+        <form method="post" th:action="@{/login}">
+            <div class="mb-3">
+                <label for="username" class="form-label">E-mail</label>
+                <input id="username" name="username" type="email" class="form-control" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Senha</label>
+                <input id="password" name="password" type="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Entrar</button>
+            <a class="btn btn-link" href="/register">Criar conta</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>
