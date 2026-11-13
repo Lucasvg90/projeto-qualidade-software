@@ -1,5 +1,19 @@
 # Checklist de entrega — Organização de Recursos
 
+## Requisitos funcionais obrigatórios (verificação em 13/11/2026)
+
+Esta seção registra a verificação do código atual. A avaliação externa de 08/11/2026 abaixo é um registro histórico de outro checkout.
+
+| Requisito | Status | Evidência |
+|---|---|---|
+| [x] Autenticação e autorização por perfil | Implementado: login com senha BCrypt e perfis `ADMIN`, `PROFESSOR` e `SOLICITANTE`; rotas e operações administrativas são protegidas. | `src/main/java/com/example/educationalqualityproject/config/SecurityConfig.java`; `service/UserDetailsServiceImpl.java`; `entity/UserRole.java` |
+| [x] Cadastro e consulta de salas, professores e materiais | Implementado: salas e materiais são tipos de recurso; há cadastro, consulta, edição e remoção de recursos e professores. | `entity/ResourceType.java`; `controller/ResourcePageController.java`; `controller/TeacherController.java`; `controller/api/` |
+| [x] Pesquisa por tipo, capacidade, localização, competência e disponibilidade | Implementado: filtros de recursos incluem os cinco critérios; professores também podem ser pesquisados por competência e disponibilidade. | `service/EducationalResourceService.java`; `service/TeacherService.java`; `templates/resource/list.html` |
+| [x] Criação, alteração e cancelamento de reservas | Implementado pela API e pela interface web; edição e cancelamento só são oferecidos para reservas pendentes ou aprovadas e a edição valida o solicitante. | `controller/api/ReservationApiController.java`; `controller/ReservationPageController.java`; `templates/reservation/list.html`; `service/ReservationService.java` |
+| [x] Detecção de sobreposição de horários, inclusive na agenda do professor | Implementado com bloqueios por minuto para cada recurso e professor; reservas pendentes de aprovação também ocupam os horários. | `service/ReservationService.java`; `entity/ReservationSlot.java`; `config/DatabaseBootstrap.java` |
+| [x] Proteção contra dupla reserva em solicitações simultâneas | Implementada com transações MongoDB e índice único por recurso/professor e minuto; uma colisão retorna conflito em vez de confirmar a reserva. Não houve teste de integração concorrente nesta rodada porque o MongoDB local não estava disponível. | `config/MongoTransactionConfig.java`; `config/DatabaseBootstrap.java`; `controller/api/ApiExceptionHandler.java`; `controller/ReservationPageController.java` |
+| [x] Aprovação obrigatória para recursos restritos | Implementado: solicitação para recurso restrito fica pendente e só perfil administrador pode aprovar ou rejeitar. | `service/ReservationService.java`; `controller/AdminReservationController.java`; `config/SecurityConfig.java` |
+
 ## Escopo e método
 
 - Avaliação externa realizada em 08/11/2026 sobre clone limpo do repositório, sem usar o `target/` ou cache Maven do checkout do desenvolvedor.

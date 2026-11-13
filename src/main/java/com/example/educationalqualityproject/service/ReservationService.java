@@ -63,10 +63,7 @@ public class ReservationService {
     public Reservation update(String id, ReservationRequest request, String actor, boolean administrator) {
         Reservation existing = get(id);
         verifyOwner(existing, actor, administrator);
-        if (existing.getStatus() == ReservationStatus.CANCELLED
-                || existing.getStatus() == ReservationStatus.REJECTED) {
-            throw new ResponseStatusException(BAD_REQUEST, "Esta reserva não pode mais ser alterada.");
-        }
+        ensureEditable(existing);
 
         Reservation updated = fromRequest(request, existing.getRequestedBy(), existing);
         updated.setStatus(hasRestrictedResource(updated)
@@ -112,6 +109,13 @@ public class ReservationService {
         return reservationRepository.findAll().stream()
                 .filter(reservation -> requester.equals(reservation.getRequestedBy()))
                 .toList();
+    }
+
+    public Reservation getForRequester(String id, String requester) {
+        Reservation reservation = get(id);
+        verifyOwner(reservation, requester, false);
+        ensureEditable(reservation);
+        return reservation;
     }
 
     public Reservation get(String id) {
@@ -185,6 +189,13 @@ public class ReservationService {
     private void verifyOwner(Reservation reservation, String actor, boolean administrator) {
         if (!administrator && !actor.equals(reservation.getRequestedBy())) {
             throw new AccessDeniedException("Você não pode alterar esta reserva.");
+        }
+    }
+
+    private void ensureEditable(Reservation reservation) {
+        if (reservation.getStatus() == ReservationStatus.CANCELLED
+                || reservation.getStatus() == ReservationStatus.REJECTED) {
+            throw new ResponseStatusException(BAD_REQUEST, "Esta reserva não pode mais ser alterada.");
         }
     }
 }
