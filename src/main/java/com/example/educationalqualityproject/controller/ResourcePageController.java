@@ -3,6 +3,7 @@ package com.example.educationalqualityproject.controller;
 import com.example.educationalqualityproject.entity.EducationalResource;
 import com.example.educationalqualityproject.entity.ResourceType;
 import com.example.educationalqualityproject.service.EducationalResourceService;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -54,22 +55,25 @@ public class ResourcePageController {
     }
 
     @PostMapping
-    public String create(@ModelAttribute EducationalResource resource) {
-        resourceService.save(resource);
+    public String create(@ModelAttribute EducationalResource resource, Authentication authentication) {
+        resourceService.save(resource, authentication.getName());
         return "redirect:/resources";
     }
 
     @PostMapping("/{id}")
-    public String update(@PathVariable String id, @ModelAttribute EducationalResource resource) {
+    public String update(
+            @PathVariable String id,
+            @ModelAttribute EducationalResource resource,
+            Authentication authentication) {
         resourceService.getById(id);
         resource.setId(id);
-        resourceService.save(resource);
+        resourceService.save(resource, authentication.getName());
         return "redirect:/resources";
     }
 
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable String id) {
-        resourceService.delete(id);
+    public String delete(@PathVariable String id, Authentication authentication) {
+        resourceService.delete(id, authentication.getName());
         return "redirect:/resources";
     }
 

@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -27,6 +28,7 @@ import java.util.stream.StreamSupport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyIterable;
 import static org.mockito.Mockito.verify;
@@ -43,6 +45,10 @@ class ReservationServiceTest {
     private EducationalResourceRepository resourceRepository;
     @Mock
     private TeacherRepository teacherRepository;
+    @Mock
+    private AuditRecorder auditRecorder;
+    @Mock
+    private NotificationSender notificationSender;
 
     @InjectMocks
     private ReservationService reservationService;
@@ -74,6 +80,12 @@ class ReservationServiceTest {
         assertEquals(List.of("resource:room-1", "resource:room-1", "teacher:teacher-1", "teacher:teacher-1"),
                 slots.stream().map(ReservationSlot::getResourceKey).sorted().toList());
         assertEquals(List.of("reservation-1"), slots.stream().map(ReservationSlot::getReservationId).distinct().toList());
+        verify(auditRecorder).record("RESERVATION", "reservation-1", "RESERVATION_CREATED",
+                "requester@example.com", "Depois: recursos=[room-1], professor=teacher-1, início="
+                        + start + ", fim=" + start.plus(2, ChronoUnit.MINUTES)
+                        + ", status=PENDING_APPROVAL");
+        verify(notificationSender).send("requester@example.com", "RESERVATION_CREATED", "reservation-1",
+                "Sua reserva foi criada com status PENDING_APPROVAL.");
     }
 
     @Test
@@ -87,5 +99,22 @@ class ReservationServiceTest {
         assertSame(reservation, reservationService.getForRequester("reservation-1", "owner@example.com"));
         assertThrows(AccessDeniedException.class,
                 () -> reservationService.getForRequester("reservation-1", "other@example.com"));
+    }
+
+    @Test
+    void resourceUnderMaintenanceCannotBeReserved() {
+        EducationalResource resource = new EducationalResource();
+        resource.setId("material-1");
+        resource.setName("Projetor");
+        resource.setType(ResourceType.EQUIPAMENTO);
+        resource.setUnderMaintenance(true);
+        when(resourceRepository.existsById("material-1")).thenReturn(true);
+        when(resourceRepository.findAllById(anyIterable())).thenReturn(List.of(resource));
+
+        Instant start = Instant.now().plus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES);
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> reservationService.create(new ReservationRequest(
+                List.of("material-1"), null, start, start.plus(1, ChronoUnit.HOURS)), "requester@example.com"));
+        assertTrue(exception.getReason().contains("está em manutenção"));
     }
 }

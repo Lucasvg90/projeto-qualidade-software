@@ -5,6 +5,7 @@ import com.example.educationalqualityproject.entity.ResourceType;
 import com.example.educationalqualityproject.service.EducationalResourceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -38,20 +39,25 @@ public class EducationalResourceApiController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EducationalResource create(@Valid @RequestBody EducationalResource resource) {
-        return resourceService.save(resource);
+    public EducationalResource create(
+            @Valid @RequestBody EducationalResource resource,
+            Authentication authentication) {
+        return resourceService.save(resource, authentication.getName());
     }
 
     @PutMapping("/{id}")
-    public EducationalResource update(@PathVariable String id, @Valid @RequestBody EducationalResource resource) {
+    public EducationalResource update(
+            @PathVariable String id,
+            @Valid @RequestBody EducationalResource resource,
+            Authentication authentication) {
         resourceService.getById(id);
         resource.setId(id);
-        return resourceService.save(resource);
+        return resourceService.save(resource, authentication.getName());
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable String id) {
-        resourceService.delete(id);
+    public void delete(@PathVariable String id, Authentication authentication) {
+        resourceService.delete(id, authentication.getName());
     }
 }

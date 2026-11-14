@@ -1,21 +1,27 @@
 package com.example.educationalqualityproject.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/", "/login", "/register", "/error").permitAll()
@@ -42,13 +48,43 @@ public class SecurityConfig {
                 .logout(logout -> logout.logoutSuccessUrl("/"))
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
-                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                new AntPathRequestMatcher("/api/**")));
+                                apiAuthenticationEntryPoint(objectMapper),
+                                new AntPathRequestMatcher("/api/**"))
+                        .accessDeniedHandler(accessDeniedHandler(objectMapper)));
         return http.build();
     }
 
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    private AuthenticationEntryPoint apiAuthenticationEntryPoint(ObjectMapper objectMapper) {
+        return (request, response, exception) -> writeProblem(
+                objectMapper, response, HttpStatus.UNAUTHORIZED,
+                "Faça login para acessar este recurso.");
+    }
+
+    private AccessDeniedHandler accessDeniedHandler(ObjectMapper objectMapper) {
+        return (request, response, exception) -> {
+            if (request.getRequestURI().startsWith("/api/")) {
+                writeProblem(objectMapper, response, HttpStatus.FORBIDDEN,
+                        "Você não tem permissão para realizar esta operação.");
+            } else {
+                response.sendError(HttpStatus.FORBIDDEN.value(),
+                        "Você não tem permissão para realizar esta operação.");
+            }
+        };
+    }
+
+    private void writeProblem(
+            ObjectMapper objectMapper,
+            jakarta.servlet.http.HttpServletResponse response,
+            HttpStatus status,
+            String detail) throws java.io.IOException {
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        objectMapper.writeValue(response.getOutputStream(), ProblemDetail.forStatusAndDetail(status, detail));
     }
 }

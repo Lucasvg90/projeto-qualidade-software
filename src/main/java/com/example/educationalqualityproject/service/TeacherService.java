@@ -5,6 +5,7 @@ import com.example.educationalqualityproject.entity.ReservationStatus;
 import com.example.educationalqualityproject.repository.ReservationRepository;
 import com.example.educationalqualityproject.repository.TeacherRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
@@ -21,10 +22,15 @@ public class TeacherService {
 
     private final TeacherRepository teacherRepository;
     private final ReservationRepository reservationRepository;
+    private final AuditRecorder auditRecorder;
 
-    public TeacherService(TeacherRepository teacherRepository, ReservationRepository reservationRepository) {
+    public TeacherService(
+            TeacherRepository teacherRepository,
+            ReservationRepository reservationRepository,
+            AuditRecorder auditRecorder) {
         this.teacherRepository = teacherRepository;
         this.reservationRepository = reservationRepository;
+        this.auditRecorder = auditRecorder;
     }
 
     public List<Teacher> getAllTeachers() {
@@ -61,15 +67,36 @@ public class TeacherService {
         return teacherRepository.findById(id);
     }
 
-    public Teacher saveTeacher(Teacher teacher) {
-        return teacherRepository.save(teacher);
+    @Transactional
+    public Teacher saveTeacher(Teacher teacher, String actor) {
+        Teacher previous = teacher.getId() == null
+                ? null : teacherRepository.findById(teacher.getId()).orElse(null);
+        Teacher saved = teacherRepository.save(teacher);
+        String action = previous == null ? "TEACHER_CREATED" : "TEACHER_UPDATED";
+        String details = previous == null
+                ? "Depois: " + describe(saved)
+                : "Antes: " + describe(previous) + "; depois: " + describe(saved);
+        auditRecorder.record("TEACHER", saved.getId(), action, actor, details);
+        return saved;
     }
 
-    public void deleteTeacher(String id) {
+    @Transactional
+    public void deleteTeacher(String id, String actor) {
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Professor não encontrado."));
         teacherRepository.deleteById(id);
+        auditRecorder.record("TEACHER", id, "TEACHER_DELETED", actor, "Excluído: " + describe(teacher));
     }
 
     public boolean existsByEmail(String email) {
         return teacherRepository.existsByEmail(email);
+    }
+
+    private String describe(Teacher teacher) {
+        return "nome=" + teacher.getName()
+                + ", email=" + teacher.getEmail()
+                + ", departamento=" + teacher.getDepartment()
+                + ", competências=" + teacher.getCompetencies();
     }
 }

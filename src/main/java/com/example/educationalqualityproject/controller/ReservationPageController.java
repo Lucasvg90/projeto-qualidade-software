@@ -5,6 +5,7 @@ import com.example.educationalqualityproject.dto.ReservationRequest;
 import com.example.educationalqualityproject.entity.Reservation;
 import com.example.educationalqualityproject.repository.EducationalResourceRepository;
 import com.example.educationalqualityproject.repository.TeacherRepository;
+import com.example.educationalqualityproject.service.AuditRecorder;
 import com.example.educationalqualityproject.service.ReservationService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.core.Authentication;
@@ -24,14 +25,17 @@ public class ReservationPageController {
     private final ReservationService reservationService;
     private final EducationalResourceRepository resourceRepository;
     private final TeacherRepository teacherRepository;
+    private final AuditRecorder auditRecorder;
 
     public ReservationPageController(
             ReservationService reservationService,
             EducationalResourceRepository resourceRepository,
-            TeacherRepository teacherRepository) {
+            TeacherRepository teacherRepository,
+            AuditRecorder auditRecorder) {
         this.reservationService = reservationService;
         this.resourceRepository = resourceRepository;
         this.teacherRepository = teacherRepository;
+        this.auditRecorder = auditRecorder;
     }
 
     @GetMapping
@@ -62,6 +66,9 @@ public class ReservationPageController {
             reservationService.create(toRequest(form), authentication.getName());
             return "redirect:/reservations";
         } catch (ResponseStatusException | DuplicateKeyException exception) {
+            if (exception instanceof DuplicateKeyException) {
+                auditRecorder.recordPreventedConflicts(form.getResourceIds(), authentication.getName());
+            }
             addErrorAndForm(model, authentication.getName(), form, null, exception);
             return "reservation/list";
         }
@@ -77,6 +84,9 @@ public class ReservationPageController {
             reservationService.update(id, toRequest(form), authentication.getName(), false);
             return "redirect:/reservations";
         } catch (ResponseStatusException | DuplicateKeyException exception) {
+            if (exception instanceof DuplicateKeyException) {
+                auditRecorder.recordPreventedConflicts(form.getResourceIds(), authentication.getName());
+            }
             addErrorAndForm(model, authentication.getName(), form, id, exception);
             return "reservation/list";
         }

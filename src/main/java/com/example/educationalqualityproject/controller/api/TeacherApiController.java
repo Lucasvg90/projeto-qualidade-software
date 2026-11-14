@@ -5,11 +5,16 @@ import com.example.educationalqualityproject.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
 import java.time.Instant;
+
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
 @RequestMapping("/api/teachers")
@@ -40,7 +45,7 @@ public class TeacherApiController {
         if (teacher.isPresent()) {
             return new ResponseEntity<>(teacher.get(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(NOT_FOUND, "Professor não encontrado.");
         }
     }
 
@@ -48,13 +53,13 @@ public class TeacherApiController {
      * Create a new teacher
      */
     @PostMapping
-    public ResponseEntity<Teacher> createTeacher(@RequestBody Teacher teacher) {
+    public ResponseEntity<Teacher> createTeacher(@RequestBody Teacher teacher, Authentication authentication) {
         // Check if email already exists
         if (teacherService.existsByEmail(teacher.getEmail())) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ResponseStatusException(CONFLICT, "Já existe um professor com este e-mail.");
         }
         
-        Teacher savedTeacher = teacherService.saveTeacher(teacher);
+        Teacher savedTeacher = teacherService.saveTeacher(teacher, authentication.getName());
         return new ResponseEntity<>(savedTeacher, HttpStatus.CREATED);
     }
 
@@ -62,7 +67,10 @@ public class TeacherApiController {
      * Update an existing teacher
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Teacher> updateTeacher(@PathVariable String id, @RequestBody Teacher teacher) {
+    public ResponseEntity<Teacher> updateTeacher(
+            @PathVariable String id,
+            @RequestBody Teacher teacher,
+            Authentication authentication) {
         Optional<Teacher> existingTeacher = teacherService.getTeacherById(id);
         if (!existingTeacher.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -71,12 +79,12 @@ public class TeacherApiController {
         // Check if email already exists for other teachers
         if (teacher.getEmail() != null && !teacher.getEmail().equals(existingTeacher.get().getEmail())) {
             if (teacherService.existsByEmail(teacher.getEmail())) {
-                return new ResponseEntity<>(HttpStatus.CONFLICT);
+                throw new ResponseStatusException(CONFLICT, "Já existe um professor com este e-mail.");
             }
         }
         
         teacher.setId(id); // Ensure the ID remains the same
-        Teacher updatedTeacher = teacherService.saveTeacher(teacher);
+        Teacher updatedTeacher = teacherService.saveTeacher(teacher, authentication.getName());
         return new ResponseEntity<>(updatedTeacher, HttpStatus.OK);
     }
 
@@ -84,13 +92,13 @@ public class TeacherApiController {
      * Delete a teacher
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTeacher(@PathVariable String id) {
+    public ResponseEntity<Void> deleteTeacher(@PathVariable String id, Authentication authentication) {
         Optional<Teacher> teacher = teacherService.getTeacherById(id);
         if (teacher.isPresent()) {
-            teacherService.deleteTeacher(id);
+            teacherService.deleteTeacher(id, authentication.getName());
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(NOT_FOUND, "Professor não encontrado.");
         }
     }
 }

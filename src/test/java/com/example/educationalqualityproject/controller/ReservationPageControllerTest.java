@@ -4,6 +4,7 @@ import com.example.educationalqualityproject.dto.ReservationForm;
 import com.example.educationalqualityproject.entity.Reservation;
 import com.example.educationalqualityproject.repository.EducationalResourceRepository;
 import com.example.educationalqualityproject.repository.TeacherRepository;
+import com.example.educationalqualityproject.service.AuditRecorder;
 import com.example.educationalqualityproject.service.ReservationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,8 +26,9 @@ class ReservationPageControllerTest {
         CapturingReservationService reservationService = new CapturingReservationService();
         EducationalResourceRepository resourceRepository = mock(EducationalResourceRepository.class);
         TeacherRepository teacherRepository = mock(TeacherRepository.class);
+        AuditRecorder auditRecorder = mock(AuditRecorder.class);
         ReservationPageController controller = new ReservationPageController(
-                reservationService, resourceRepository, teacherRepository);
+                reservationService, resourceRepository, teacherRepository, auditRecorder);
 
         Instant start = Instant.parse("2026-12-01T10:00:00Z");
         Reservation reservation = new Reservation();
@@ -64,7 +66,7 @@ class ReservationPageControllerTest {
         private String requester;
 
         private CapturingReservationService() {
-            super(null, null, null, null);
+            super(null, null, null, null, null, null);
         }
 
         @Override

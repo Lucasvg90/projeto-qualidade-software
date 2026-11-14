@@ -14,6 +14,38 @@ Esta seção registra a verificação do código atual. A avaliação externa de
 | [x] Proteção contra dupla reserva em solicitações simultâneas | Implementada com transações MongoDB e índice único por recurso/professor e minuto; uma colisão retorna conflito em vez de confirmar a reserva. Não houve teste de integração concorrente nesta rodada porque o MongoDB local não estava disponível. | `config/MongoTransactionConfig.java`; `config/DatabaseBootstrap.java`; `controller/api/ApiExceptionHandler.java`; `controller/ReservationPageController.java` |
 | [x] Aprovação obrigatória para recursos restritos | Implementado: solicitação para recurso restrito fica pendente e só perfil administrador pode aprovar ou rejeitar. | `service/ReservationService.java`; `controller/AdminReservationController.java`; `config/SecurityConfig.java` |
 
+## Requisitos funcionais adicionais (verificação em 13/11/2026)
+
+| Requisito | Status | Evidência |
+|---|---|---|
+| [x] Bloqueio de recursos em manutenção | Implementado: estado editável no catálogo; novas reservas/retiradas são rejeitadas e a pesquisa por disponibilidade não lista o recurso. | `entity/EducationalResource.java`; `service/ReservationService.java`; `service/EducationalResourceService.java`; `service/MaterialCheckoutService.java` |
+| [x] Registro de retirada e devolução de materiais e equipamentos | Implementado por API administrativa, com responsável e data/hora, restrito a reservas aprovadas. | `entity/MaterialCheckout.java`; `service/MaterialCheckoutService.java`; `controller/api/AdminOperationsApiController.java` |
+| [x] Histórico auditável de mudanças | Implementado para contas, estudantes, professores, recursos, reservas, movimentações e conflitos; registra ator, ação, entidade, data/hora e detalhes. | `entity/AuditEvent.java`; `service/AuditLogService.java`; `controller/api/AdminAuditApiController.java` |
+| [x] Notificação simulada ou integração com API externa | Implementado como notificações simuladas persistidas, sem chamada externa; eventos são consultáveis por administrador. | `entity/NotificationEvent.java`; `service/SimulatedNotificationService.java`; `controller/api/AdminAuditApiController.java` |
+| [x] Relatório de utilização por recurso, carga horária alocada e conflitos evitados | Implementado por API administrativa; horas contam reservas aprovadas e conflitos contam colisões registradas por recurso. | `dto/ResourceUsageReport.java`; `service/ResourceUsageReportService.java`; `controller/api/AdminOperationsApiController.java` |
+| [x] Interface responsiva e mensagens de erro compreensíveis | Bootstrap responsivo, tabelas com rolagem em telas estreitas, mensagem web localizada e respostas de erro da API em Problem Details. | `templates/layout.html`; `templates/error.html`; `controller/WebErrorControllerAdvice.java`; `controller/api/ApiExceptionHandler.java` |
+| [x] Documentação de API ou dos fluxos públicos do sistema | Documentação de autenticação, permissões, endpoints, payloads, relatório e erros. | `docs/api.md`; `README.md` |
+
+## Checklist de validação prática dos sete requisitos
+
+Marque cada caixa ao repetir a verificação no ambiente de entrega. Os resultados abaixo registram apenas o que foi exercitado nesta rodada; verificações visuais e não concluídas continuam pendentes.
+
+| Requisito | Verificação objetiva | Resultado em 13/11/2026 |
+|---|---|---|
+| Bloqueio em manutenção | [ ] Marcar um recurso como em manutenção; confirmar que `POST /api/reservations` é recusado e que `GET /api/resources?availableFrom=...&availableUntil=...` não o lista. | Reserva recusada com HTTP 400 no teste pela API. A ausência na pesquisa de disponibilidade não foi confirmada nesta rodada. |
+| Retirada e devolução | [x] Para uma reserva aprovada, chamar `POST /api/admin/checkouts` e depois `POST /api/admin/checkouts/{id}/return`; conferir estado, responsável e horários. | Testado pela API no MongoDB isolado: retirada HTTP 201 e devolução HTTP 200, persistidas com estado `RETURNED` e responsáveis. |
+| Histórico auditável | [x] Consultar `GET /api/admin/audit` após criar/alterar recurso, reservar, retirar/devolver e provocar conflito; verificar ator, ação, entidade, data e detalhes. | Eventos de criação/alteração, reserva, conflito e movimentações foram persistidos e consultados; o banco de teste registrou seis eventos. |
+| Notificação simulada ou integração | [x] Executar uma operação notificável e consultar `GET /api/admin/notifications`; conferir destinatário, evento, mensagem e canal. | Teste unitário confirmou persistência no canal `SIMULATED`; a API e o banco isolado também registraram notificações. |
+| Relatório de utilização | [x] Consultar `GET /api/admin/reports/resource-usage`; comparar reservas aprovadas, horas alocadas e conflitos evitados com os dados de teste. | API retornou 1,00 hora alocada e 1 conflito evitado para o recurso de teste; teste unitário focado também passou. |
+| Responsividade e erros compreensíveis | [ ] Abrir as telas em viewport móvel e desktop; conferir navegação e tabelas sem quebra. Provocar erro de validação/permissão e ler a mensagem exibida. | A página inicial respondeu HTTP 200 e o bloqueio retornou HTTP 400. A conferência visual em viewport móvel permanece pendente. |
+| Documentação de API/fluxos | [x] Conferir autenticação, permissões, endpoints, exemplos de payload, respostas/erros e os fluxos de manutenção e movimentação. | Conferido em `docs/api.md`; este checklist aponta verificações práticas e pendências. |
+
+### Ambiente e escopo desta rodada
+
+- O MongoDB do Docker respondeu ao ping. A aplicação foi iniciada com um banco de teste separado (`qualidade_software_checklist_20261113`); os bancos existentes não foram usados para gravação.
+- Passaram cinco testes unitários focados em retirada/devolução, relatório e notificação: `MaterialCheckoutServiceTest`, `ResourceUsageReportServiceTest` e `SimulatedNotificationServiceTest`.
+- O teste pela API cobriu manutenção, reserva, conflito, retirada/devolução, auditoria, notificação e relatório. Isso não substitui a validação visual responsiva nem a repetição em ambiente limpo de entrega.
+
 ## Escopo e método
 
 - Avaliação externa realizada em 08/11/2026 sobre clone limpo do repositório, sem usar o `target/` ou cache Maven do checkout do desenvolvedor.
@@ -21,7 +53,27 @@ Esta seção registra a verificação do código atual. A avaliação externa de
 - Branches de trabalho foram consultadas para identificar artefatos fora de `main`; itens nessas branches não foram considerados entregues no branch padrão.
 - Nenhum código da aplicação foi alterado. Este checklist é o único arquivo criado no checkout selecionado.
 
-## Entregáveis
+## Pacote de entregáveis nesta execução (13/11/2026)
+
+| Entregável | Estado | Evidência / pendência |
+|---|---|---|
+| Repositório com histórico de trabalho e revisão por pares | Parcial | Histórico Git e PR [#1](https://github.com/Lucasvg90/projeto-qualidade-software/pull/1) existem; a PR está aberta sem aprovação de revisão registrada. Alterações locais ainda não estão integradas. |
+| Aplicação executável e instruções | Implementado no working tree | Instruções no `README.md`; `mvnw clean verify` passou e os testes de página validam `/`. Execução remota/merge pendentes. |
+| README e documentação da API | Implementado | `README.md`; `docs/api.md`. |
+| RTM requisito/risco/teste/evidência | Criado | `docs/RTM.md`; inclui pendências e critérios de encerramento. |
+| Diagramas de contexto, componentes e sequências | Criado | `docs/diagrams.md`. |
+| Plano e suíte automatizada | Parcial | `docs/entrega/plano-testes.md`; 21 testes passam; integração/Testcontainers, WireMock e E2E faltam. Concorrência foi testada manualmente com JMeter. |
+| Relatório de testes | Criado | `docs/entrega/relatorio-testes.md`; JaCoCo 41,12% linhas / 18,04% branches, abaixo da meta. |
+| Pipeline de integração contínua | Criado, ainda não executado remotamente | `.github/workflows/ci.yml`; exige push/PR para obter run e artefatos. |
+| Relatórios SonarCloud e JaCoCo | JaCoCo local disponível; SonarCloud pendente | `target/site/jacoco/`; workflow Sonar requer secrets/vars e run remoto. |
+| Plano e resultado de teste de carga | Executado em três rodadas locais; limitado | `docs/entrega/plano-teste-carga.md`, `jmeter-reservas.jmx` e `resultado-teste-carga.md`; contenção passou, carga sustentada ainda pendente. |
+| Registro de defeitos | Criado | `docs/entrega/registro-defeitos.md`; itens abertos e correções locais diferenciados. |
+| Relatório final de qualidade | Preliminar, aprovação bloqueada | `docs/entrega/relatorio-qualidade.md`. |
+| Apresentação e demonstração | Roteiro criado | `docs/entrega/apresentacao.md`; preparar dados e capturas na equipe. |
+
+## Inventário histórico de 08/11/2026
+
+Os registros abaixo descrevem um clone/commit avaliado em 08/11; não representam automaticamente o estado atual do working tree.
 
 | Item | Existe | Atualizado | Caminho / evidência |
 |---|---|---|---|

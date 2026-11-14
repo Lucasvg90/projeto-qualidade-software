@@ -7,6 +7,7 @@ import com.example.educationalqualityproject.entity.ResourceType;
 import com.example.educationalqualityproject.repository.EducationalResourceRepository;
 import com.example.educationalqualityproject.repository.ReservationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
@@ -23,12 +24,15 @@ public class EducationalResourceService {
 
     private final EducationalResourceRepository repository;
     private final ReservationRepository reservationRepository;
+    private final AuditRecorder auditRecorder;
 
     public EducationalResourceService(
             EducationalResourceRepository repository,
-            ReservationRepository reservationRepository) {
+            ReservationRepository reservationRepository,
+            AuditRecorder auditRecorder) {
         this.repository = repository;
         this.reservationRepository = reservationRepository;
+        this.auditRecorder = auditRecorder;
     }
 
     public List<EducationalResource> search(
@@ -67,6 +71,7 @@ public class EducationalResourceService {
                         && resource.getCompetencies().stream()
                         .anyMatch(value -> value.toLowerCase(Locale.ROOT)
                                 .contains(competence.toLowerCase(Locale.ROOT))))
+                .filter(resource -> availableFrom == null || !resource.isUnderMaintenance())
                 .filter(resource -> availableFrom == null || !unavailableIds.contains(resource.getId()))
                 .toList();
     }
@@ -76,18 +81,39 @@ public class EducationalResourceService {
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Recurso não encontrado."));
     }
 
-    public EducationalResource save(EducationalResource resource) {
+    @Transactional
+    public EducationalResource save(EducationalResource resource, String actor) {
         if (resource.getType() == ResourceType.SALA
                 && (resource.getCapacity() == null || resource.getCapacity() < 1)) {
             throw new ResponseStatusException(BAD_REQUEST, "Sala deve ter capacidade maior que zero.");
         }
-        return repository.save(resource);
+        EducationalResource previous = resource.getId() == null
+                ? null : repository.findById(resource.getId()).orElse(null);
+        EducationalResource saved = repository.save(resource);
+        String action = previous == null ? "RESOURCE_CREATED" : "RESOURCE_UPDATED";
+        String details = previous == null
+                ? "Depois: " + describe(saved)
+                : "Antes: " + describe(previous) + "; depois: " + describe(saved);
+        auditRecorder.record("RESOURCE", saved.getId(), action, actor, details);
+        return saved;
     }
 
-    public void delete(String id) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(NOT_FOUND, "Recurso não encontrado.");
-        }
+    @Transactional
+    public void delete(String id, String actor) {
+        EducationalResource resource = getById(id);
         repository.deleteById(id);
+        auditRecorder.record("RESOURCE", id, "RESOURCE_DELETED", actor,
+                "Excluído: " + describe(resource));
+    }
+
+    private String describe(EducationalResource resource) {
+        return "nome=" + resource.getName()
+                + ", tipo=" + resource.getType()
+                + ", local=" + resource.getLocation()
+                + ", capacidade=" + resource.getCapacity()
+                + ", descrição=" + resource.getDescription()
+                + ", competências=" + resource.getCompetencies()
+                + ", restrito=" + resource.isRestricted()
+                + ", manutenção=" + resource.isUnderMaintenance();
     }
 }

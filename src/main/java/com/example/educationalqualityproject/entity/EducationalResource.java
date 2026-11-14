@@ -27,6 +27,7 @@ public class EducationalResource {
     private String description;
     private List<String> competencies = new ArrayList<>();
     private boolean restricted;
+    private boolean underMaintenance;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -103,6 +104,15 @@ public class EducationalResource {
 
     public void setRestricted(boolean restricted) {
         this.restricted = restricted;
+        this.updatedAt = Instant.now();
+    }
+
+    public boolean isUnderMaintenance() {
+        return underMaintenance;
+    }
+
+    public void setUnderMaintenance(boolean underMaintenance) {
+        this.underMaintenance = underMaintenance;
         this.updatedAt = Instant.now();
     }
 

@@ -55,17 +55,17 @@ Apenas administradores criam contas com perfis privilegiados. Reservas com qualq
 ## Executar e testar
 
 ```powershell
-.\mvnw.cmd test
+.\mvnw.cmd -B clean verify
 .\mvnw.cmd spring-boot:run
 ```
 
-Os testes usam o perfil `test` e não se conectam a nenhum banco. O perfil padrão é `local` e usa o MongoDB do Docker Compose; para o ambiente hospedado, defina `SPRING_PROFILES_ACTIVE=prod` e configure `MONGODB_URI`.
+Os testes usam o perfil `test`. `clean verify` também gera o relatório JaCoCo em `target/site/jacoco/`. O perfil padrão é `local` e usa o MongoDB do Docker Compose; para o ambiente hospedado, defina `SPRING_PROFILES_ACTIVE=prod` e configure `MONGODB_URI`.
 
 ## Interface web
 
 - `/` — página inicial
 - `/login` e `/register` — autenticação e cadastro de solicitante
-- `/resources` — busca por tipo (`SALA` ou `MATERIAL`), capacidade mínima, localização, competência e disponibilidade
+- `/resources` — busca por tipo (`SALA`, `MATERIAL` ou `EQUIPAMENTO`), capacidade mínima, localização, competência e disponibilidade
 - `/teachers` — consulta de professores por competência e disponibilidade; usuários autenticados podem cadastrar um professor e administradores também podem editar ou excluir registros
 - `/reservations` — criação e consulta das próprias reservas
 - `/admin/reservations` — aprovação ou rejeição de recursos restritos (administrador)
@@ -79,7 +79,7 @@ Todas as rotas `/api/**` exigem autenticação. As rotas de escrita do catálogo
 - `GET /api/resources?type=SALA&capacity=20&location=bloco&competence=multimidia&availableFrom=2026-11-09T10:00:00Z&availableUntil=2026-11-09T11:00:00Z` — pesquisa combinável
 - `GET /api/resources` e `GET /api/resources/{id}` — consulta do catálogo
 - `POST /api/resources`, `PUT /api/resources/{id}`, `DELETE /api/resources/{id}` — CRUD do catálogo (escrita administrativa)
-- `GET /api/teachers?competence=matemática&availableFrom=2026-11-09T10:00:00Z&availableUntil=2026-11-09T11:00:00Z` — pesquisa de professores por competência e disponibilidade"
+- `GET /api/teachers?competence=matemática&availableFrom=2026-11-09T10:00:00Z&availableUntil=2026-11-09T11:00:00Z` — pesquisa de professores por competência e disponibilidade
 - `/api/teachers` e `/api/students` — operações CRUD existentes, disponíveis para administrador
 - `GET /api/admin/users` e `POST /api/admin/users` — consulta e provisionamento de contas/perfis (administrador)
 
@@ -116,3 +116,25 @@ Exemplo de reserva (datas em UTC, alinhadas ao minuto):
 ```
 
 Uma tentativa simultânea para horário ocupado retorna HTTP `409 Conflict`. Reservas devem durar até 24 horas e podem ser agendadas em intervalos de minutos inteiros.
+
+### Manutenção, movimentações e relatórios
+
+- Recursos podem ser marcados como em manutenção; novas reservas e retiradas ficam bloqueadas.
+- Administradores registram retirada e devolução de materiais/equipamentos em `/api/admin/checkouts`.
+- Alterações são persistidas no histórico de auditoria. Eventos de reserva e movimentação geram notificações simuladas, sem envio externo.
+- `/api/admin/reports/resource-usage` retorna reservas aprovadas, horas alocadas e conflitos evitados por recurso.
+
+Consulte [docs/api.md](./docs/api.md) para contratos, permissões, exemplos de payload e respostas de erro de todos os fluxos públicos e administrativos da API.
+
+## Qualidade e entrega
+
+- [Matriz de rastreabilidade — requisitos, riscos, testes e evidências](./docs/RTM.md)
+- [Diagramas de contexto, componentes e sequências](./docs/diagrams.md)
+- [Plano de testes](./docs/entrega/plano-testes.md) e [relatório automatizado](./docs/entrega/relatorio-testes.md)
+- [Plano de teste de carga JMeter](./docs/entrega/plano-teste-carga.md) e [resultado registrado](./docs/entrega/resultado-teste-carga.md)
+- [Registro de defeitos e pendências](./docs/entrega/registro-defeitos.md)
+- [Relatório de qualidade e decisão de release](./docs/entrega/relatorio-qualidade.md)
+- [Roteiro de apresentação e demonstração](./docs/entrega/apresentacao.md)
+- CI: [workflow do GitHub Actions](./.github/workflows/ci.yml), configurado para executar em pull requests e pushes para `main`.
+
+O relatório JaCoCo é gerado em `target/site/jacoco/` por `.\mvnw.cmd -B clean verify`. SonarCloud é opcional até configurar `SONAR_TOKEN`, `SONAR_ORGANIZATION` e `SONAR_PROJECT_KEY` nas configurações do repositório. Os relatórios atuais registram pendências honestamente: a cobertura ainda não atinge a meta, a execução remota depende de push, a revisão humana está pendente e o teste de carga sustentada ainda não foi realizado.

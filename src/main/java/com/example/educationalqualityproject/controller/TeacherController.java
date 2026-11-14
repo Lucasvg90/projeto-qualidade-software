@@ -2,6 +2,7 @@ package com.example.educationalqualityproject.controller;
 
 import com.example.educationalqualityproject.entity.Teacher;
 import com.example.educationalqualityproject.service.TeacherService;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -58,29 +59,33 @@ public class TeacherController {
     }
 
     @PostMapping
-    public String createTeacher(@ModelAttribute Teacher teacher) {
-        teacherService.saveTeacher(teacher);
+    public String createTeacher(@ModelAttribute Teacher teacher, Authentication authentication) {
+        teacherService.saveTeacher(teacher, authentication.getName());
         return "redirect:/teachers";
     }
 
     @GetMapping("/{id}/edit")
     public String showUpdateForm(@PathVariable String id, Model model) {
         Teacher teacher = teacherService.getTeacherById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid teacher Id:" + id));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Professor não encontrado."));
         model.addAttribute("teacher", teacher);
         return "teacher/form";
     }
 
     @PostMapping("/{id}")
-    public String updateTeacher(@PathVariable String id, @ModelAttribute Teacher teacher) {
+    public String updateTeacher(
+            @PathVariable String id,
+            @ModelAttribute Teacher teacher,
+            Authentication authentication) {
         teacher.setId(id);
-        teacherService.saveTeacher(teacher);
+        teacherService.saveTeacher(teacher, authentication.getName());
         return "redirect:/teachers";
     }
 
     @GetMapping("/{id}/delete")
-    public String deleteTeacher(@PathVariable String id) {
-        teacherService.deleteTeacher(id);
+    public String deleteTeacher(@PathVariable String id, Authentication authentication) {
+        teacherService.deleteTeacher(id, authentication.getName());
         return "redirect:/teachers";
     }
 }
