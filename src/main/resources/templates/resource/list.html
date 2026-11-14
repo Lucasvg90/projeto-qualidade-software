@@ -40,7 +40,7 @@
     </form>
     <div class="table-responsive">
         <table class="table table-striped">
-            <thead><tr><th>Nome</th><th>Tipo</th><th>Local</th><th>Capacidade</th><th>Competências</th><th>Restrito</th><th sec:authorize="hasRole('ADMIN')">Ações</th></tr></thead>
+            <thead><tr><th>Nome</th><th>Tipo</th><th>Local</th><th>Capacidade</th><th>Competências</th><th>Restrito</th><th>Estado</th><th sec:authorize="hasRole('ADMIN')">Ações</th></tr></thead>
             <tbody>
             <tr th:each="resource : ${resources}">
                 <td th:text="${resource.name}"></td>
@@ -49,6 +49,7 @@
                 <td th:text="${resource.capacity != null ? resource.capacity : '-'}"></td>
                 <td th:text="${#strings.listJoin(resource.competencies, ', ')}"></td>
                 <td th:text="${resource.restricted ? 'Sim (exige aprovação)' : 'Não'}"></td>
+                <td th:text="${resource.underMaintenance ? 'Em manutenção' : 'Disponível'}"></td>
                 <td sec:authorize="hasRole('ADMIN')">
                     <a class="btn btn-sm btn-outline-primary" th:href="@{/resources/{id}/edit(id=${resource.id})}">Editar</a>
                     <form class="d-inline" method="post" th:action="@{/resources/{id}/delete(id=${resource.id})}">
@@ -56,7 +57,7 @@
                     </form>
                 </td>
             </tr>
-            <tr th:if="${#lists.isEmpty(resources)}"><td colspan="7">Nenhum recurso encontrado.</td></tr>
+            <tr th:if="${#lists.isEmpty(resources)}"><td colspan="8">Nenhum recurso encontrado.</td></tr>
             </tbody>
         </table>
     </div>

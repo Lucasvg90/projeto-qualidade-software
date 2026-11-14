@@ -5,10 +5,15 @@ import com.example.educationalqualityproject.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
 @RequestMapping("/api/students")
@@ -36,7 +41,7 @@ public class StudentApiController {
         if (student.isPresent()) {
             return new ResponseEntity<>(student.get(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(NOT_FOUND, "Estudante não encontrado.");
         }
     }
 
@@ -44,16 +49,16 @@ public class StudentApiController {
      * Create a new student
      */
     @PostMapping
-    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
+    public ResponseEntity<Student> createStudent(@RequestBody Student student, Authentication authentication) {
         // Check if email or registration number already exists
         if (studentService.existsByEmail(student.getEmail())) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ResponseStatusException(CONFLICT, "Já existe um estudante com este e-mail.");
         }
         if (studentService.existsByRegistrationNumber(student.getRegistrationNumber())) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ResponseStatusException(CONFLICT, "Já existe um estudante com esta matrícula.");
         }
         
-        Student savedStudent = studentService.saveStudent(student);
+        Student savedStudent = studentService.saveStudent(student, authentication.getName());
         return new ResponseEntity<>(savedStudent, HttpStatus.CREATED);
     }
 
@@ -61,7 +66,10 @@ public class StudentApiController {
      * Update an existing student
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Student> updateStudent(@PathVariable String id, @RequestBody Student student) {
+    public ResponseEntity<Student> updateStudent(
+            @PathVariable String id,
+            @RequestBody Student student,
+            Authentication authentication) {
         Optional<Student> existingStudent = studentService.getStudentById(id);
         if (!existingStudent.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -70,18 +78,18 @@ public class StudentApiController {
         // Check if email or registration number already exists for other students
         if (student.getEmail() != null && !student.getEmail().equals(existingStudent.get().getEmail())) {
             if (studentService.existsByEmail(student.getEmail())) {
-                return new ResponseEntity<>(HttpStatus.CONFLICT);
+                throw new ResponseStatusException(CONFLICT, "Já existe um estudante com este e-mail.");
             }
         }
         
         if (student.getRegistrationNumber() != null && !student.getRegistrationNumber().equals(existingStudent.get().getRegistrationNumber())) {
             if (studentService.existsByRegistrationNumber(student.getRegistrationNumber())) {
-                return new ResponseEntity<>(HttpStatus.CONFLICT);
+                throw new ResponseStatusException(CONFLICT, "Já existe um estudante com esta matrícula.");
             }
         }
         
         student.setId(id); // Ensure the ID remains the same
-        Student updatedStudent = studentService.saveStudent(student);
+        Student updatedStudent = studentService.saveStudent(student, authentication.getName());
         return new ResponseEntity<>(updatedStudent, HttpStatus.OK);
     }
 
@@ -89,13 +97,13 @@ public class StudentApiController {
      * Delete a student
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStudent(@PathVariable String id) {
+    public ResponseEntity<Void> deleteStudent(@PathVariable String id, Authentication authentication) {
         Optional<Student> student = studentService.getStudentById(id);
         if (student.isPresent()) {
-            studentService.deleteStudent(id);
+            studentService.deleteStudent(id, authentication.getName());
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(NOT_FOUND, "Estudante não encontrado.");
         }
     }
 }

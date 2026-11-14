@@ -16,6 +16,7 @@
         <div class="mb-3"><label class="form-label" for="description">Descrição</label><textarea id="description" class="form-control" th:field="*{description}"></textarea></div>
         <div class="mb-3"><label class="form-label" for="competencies">Competências (separadas por vírgula)</label><input id="competencies" class="form-control" name="competencies" th:value="${#strings.listJoin(resource.competencies, ', ')}"></div>
         <div class="form-check mb-3"><input id="restricted" class="form-check-input" type="checkbox" th:field="*{restricted}"><label class="form-check-label" for="restricted">Recurso restrito (exige aprovação)</label></div>
+        <div class="form-check mb-3"><input id="underMaintenance" class="form-check-input" type="checkbox" th:field="*{underMaintenance}"><label class="form-check-label" for="underMaintenance">Em manutenção (bloqueia novas reservas)</label></div>
         <button class="btn btn-primary" type="submit">Salvar</button><a class="btn btn-secondary" href="/resources">Cancelar</a>
     </form>
 </div>

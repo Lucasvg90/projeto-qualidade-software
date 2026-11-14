@@ -4,6 +4,7 @@ import com.example.educationalqualityproject.dto.AccountResponse;
 import com.example.educationalqualityproject.dto.ManagedAccountRequest;
 import com.example.educationalqualityproject.service.UserAccountService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,8 +26,8 @@ public class AdminAccountApiController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public AccountResponse create(@RequestBody ManagedAccountRequest request) {
+    public AccountResponse create(@RequestBody ManagedAccountRequest request, Authentication authentication) {
         return AccountResponse.from(accountService.createManagedAccount(
-                request.name(), request.email(), request.password(), request.role()));
+                request.name(), request.email(), request.password(), request.role(), authentication.getName()));
     }
 }

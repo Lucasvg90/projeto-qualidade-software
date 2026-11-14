@@ -3,6 +3,9 @@ package com.example.educationalqualityproject.config;
 import com.example.educationalqualityproject.entity.UserAccount;
 import com.example.educationalqualityproject.entity.UserRole;
 import com.example.educationalqualityproject.entity.EducationalResource;
+import com.example.educationalqualityproject.entity.AuditEvent;
+import com.example.educationalqualityproject.entity.MaterialCheckout;
+import com.example.educationalqualityproject.entity.NotificationEvent;
 import com.example.educationalqualityproject.entity.Reservation;
 import com.example.educationalqualityproject.entity.ReservationSlot;
 import com.example.educationalqualityproject.entity.Student;
@@ -55,7 +58,10 @@ public class DatabaseBootstrap implements ApplicationRunner {
                 UserAccount.class,
                 EducationalResource.class,
                 Reservation.class,
-                ReservationSlot.class)) {
+                ReservationSlot.class,
+                AuditEvent.class,
+                MaterialCheckout.class,
+                NotificationEvent.class)) {
             if (!mongoTemplate.collectionExists(entityType)) {
                 mongoTemplate.createCollection(entityType);
             }
@@ -66,6 +72,9 @@ public class DatabaseBootstrap implements ApplicationRunner {
         mongoTemplate.indexOps("reservation_slots")
                 .ensureIndex(new Index().on("resourceKey", Sort.Direction.ASC)
                         .on("slotStart", Sort.Direction.ASC).unique());
+        mongoTemplate.indexOps("material_checkouts")
+                .ensureIndex(new Index().on("reservationId", Sort.Direction.ASC)
+                        .on("resourceId", Sort.Direction.ASC).unique());
 
         if (!adminEmail.isBlank() && !userAccountRepository.existsByEmailIgnoreCase(adminEmail)) {
             userAccountRepository.save(new UserAccount(

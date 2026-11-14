@@ -1,12 +1,14 @@
 package com.example.educationalqualityproject.controller;
 
 import com.example.educationalqualityproject.entity.Teacher;
+import com.example.educationalqualityproject.service.AuditRecorder;
 import com.example.educationalqualityproject.repository.ReservationRepository;
 import com.example.educationalqualityproject.repository.TeacherRepository;
 import com.example.educationalqualityproject.service.TeacherService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 class TeacherRegistrationControllerTest {
 
@@ -16,7 +18,9 @@ class TeacherRegistrationControllerTest {
         TeacherController controller = new TeacherController(service);
         Teacher teacher = new Teacher("Ana Silva", "ana@example.com", "Ciências");
 
-        String view = controller.createTeacher(teacher);
+        String view = controller.createTeacher(
+                teacher, new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        "admin@example.com", "n/a"));
 
         assertEquals("redirect:/teachers", view);
         assertEquals(teacher, service.savedTeacher);
@@ -27,11 +31,11 @@ class TeacherRegistrationControllerTest {
         private Teacher savedTeacher;
 
         private CapturingTeacherService() {
-            super(null, null);
+            super(null, null, mock(AuditRecorder.class));
         }
 
         @Override
-        public Teacher saveTeacher(Teacher teacher) {
+        public Teacher saveTeacher(Teacher teacher, String actor) {
             savedTeacher = teacher;
             return teacher;
         }

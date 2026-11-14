@@ -4,11 +4,12 @@
 <div id="content">
     <h1>Minhas reservas</h1>
     <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
-    <h2 class="h4 mt-4">Solicitar reserva</h2>
-    <form method="post" action="/reservations">
+    <h2 class="h4 mt-4" th:text="${reservationId == null ? 'Solicitar reserva' : 'Alterar reserva'}"></h2>
+    <form method="post" th:object="${reservationForm}"
+          th:action="${reservationId == null ? '/reservations' : '/reservations/' + reservationId}">
         <div class="mb-3">
             <label class="form-label" for="resourceIds">Salas e materiais</label>
-            <select class="form-select" id="resourceIds" name="resourceIds" multiple required>
+            <select class="form-select" id="resourceIds" th:field="*{resourceIds}" multiple required>
                 <option th:each="resource : ${resources}" th:value="${resource.id}"
                         th:text="${resource.name + ' (' + resource.type + (resource.restricted ? ', restrito' : '') + ')'}"></option>
             </select>
@@ -16,16 +17,18 @@
         </div>
         <div class="mb-3">
             <label class="form-label" for="teacherId">Professor (opcional)</label>
-            <select class="form-select" id="teacherId" name="teacherId">
+            <select class="form-select" id="teacherId" th:field="*{teacherId}">
                 <option value="">Sem professor</option>
                 <option th:each="teacher : ${teachers}" th:value="${teacher.id}" th:text="${teacher.name}"></option>
             </select>
         </div>
         <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label" for="startAt">Início</label><input class="form-control" id="startAt" name="startAt" type="datetime-local" required></div>
-            <div class="col-md-6 mb-3"><label class="form-label" for="endAt">Fim</label><input class="form-control" id="endAt" name="endAt" type="datetime-local" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label" for="startAt">Início</label><input class="form-control" id="startAt" th:field="*{startAt}" type="datetime-local" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label" for="endAt">Fim</label><input class="form-control" id="endAt" th:field="*{endAt}" type="datetime-local" required></div>
         </div>
-        <button class="btn btn-primary" type="submit">Solicitar</button>
+        <button class="btn btn-primary" type="submit"
+                th:text="${reservationId == null ? 'Solicitar' : 'Salvar alterações'}"></button>
+        <a th:if="${reservationId != null}" class="btn btn-secondary" href="/reservations">Cancelar edição</a>
     </form>
     <h2 class="h4 mt-5">Histórico</h2>
     <div class="table-responsive"><table class="table table-striped">
@@ -35,8 +38,12 @@
             <td th:text="${#strings.listJoin(reservation.resourceIds, ', ')}"></td>
             <td th:text="${reservation.teacherId != null ? reservation.teacherId : '-'}"></td>
             <td th:text="${reservation.startAt}"></td><td th:text="${reservation.endAt}"></td><td th:text="${reservation.status}"></td>
-            <td th:if="${reservation.status.name() == 'APPROVED' or reservation.status.name() == 'PENDING_APPROVAL'}">
-                <form method="post" th:action="@{/reservations/{id}/cancel(id=${reservation.id})}">
+            <td>
+                <a th:if="${reservation.status.name() == 'APPROVED' or reservation.status.name() == 'PENDING_APPROVAL'}"
+                   class="btn btn-sm btn-outline-primary"
+                   th:href="@{/reservations/{id}/edit(id=${reservation.id})}">Alterar</a>
+                <form th:if="${reservation.status.name() == 'APPROVED' or reservation.status.name() == 'PENDING_APPROVAL'}"
+                      method="post" th:action="@{/reservations/{id}/cancel(id=${reservation.id})}">
                     <button class="btn btn-sm btn-outline-danger" type="submit">Cancelar</button>
                 </form>
             </td>

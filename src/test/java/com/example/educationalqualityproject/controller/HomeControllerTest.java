@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.MediaType;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -26,7 +27,8 @@ class HomeControllerTest {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("home"))
-                .andExpect(content().string(containsString("Gestão de recursos educacionais")));
+                .andExpect(content().string(containsString("Gestão de recursos educacionais")))
+                .andExpect(content().string(containsString("name=\"viewport\"")));
     }
 
     @Test
@@ -57,6 +59,17 @@ class HomeControllerTest {
     @Test
     void apiRequiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/admin/users"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(content().string(containsString("Faça login para acessar este recurso.")));
+    }
+
+    @Test
+    void adminApiExplainsForbiddenAccessToOtherProfiles() throws Exception {
+        mockMvc.perform(get("/api/admin/checkouts")
+                        .with(user("requester@example.com").roles("SOLICITANTE")))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(content().string(containsString("Você não tem permissão")));
     }
 }

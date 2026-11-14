@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: html(~{::#content})}">
+<body>
+<div id="content" class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="alert alert-warning" role="alert">
+            <h1 class="h4">Não foi possível concluir a solicitação</h1>
+            <p th:text="${message != null ? message : (status == 403 ? 'Você não tem permissão para acessar esta página.' : 'Confira os dados informados e tente novamente.')}">Confira os dados informados e tente novamente.</p>
+            <p class="mb-0">Código: <span th:text="${status}">400</span></p>
+        </div>
+        <a class="btn btn-primary" href="/">Voltar ao início</a>
+    </div>
+</div>
+</body>
+</html>
