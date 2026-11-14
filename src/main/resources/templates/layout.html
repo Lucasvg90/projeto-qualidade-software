@@ -28,10 +28,19 @@
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="/login">Entrar</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/register">Criar conta</a></li>
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="nav-link" href="/login">Entrar</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="nav-link" href="/register">Criar conta</a>
+                    </li>
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                         <a class="nav-link" href="/admin/reservations">Aprovações</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <form method="post" th:action="@{/logout}">
+                            <button type="submit" class="nav-link btn btn-link">Sair</button>
+                        </form>
                     </li>
                 </ul>
             </div>
